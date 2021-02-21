@@ -1,3 +1,3 @@
 # Pacte
 
-A self contained OCaml parser combinator library with enphasis on expressivitiy and error report
+A self contained OCaml parser combinator library with emphasis on expressivity, minimality and error report
