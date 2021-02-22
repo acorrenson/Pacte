@@ -1,6 +1,6 @@
 open Location
 
-type parse_error
+type parse_error = (location * string) list
 
 val push : parse_error -> location -> string -> parse_error
 

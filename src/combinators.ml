@@ -67,12 +67,21 @@ let ( <* ) p q = p >>= fun x -> q >>= fun _ -> return x
 let (<?>) (msg : string) (p : 'a parser) (loc : location) =
   match p loc with
   | Ok _ as res -> res
-  | Ko (_, b) -> Ko (mk_error loc msg, b)
+  | Ko (err, b) ->
+      match err with
+      | [] -> Ko (mk_error loc msg, b)
+      | (l, _)::_ -> Ko (mk_error l msg, b)
 
 let (<+?>) (name : string) (p : 'a parser) (loc : location) =
   match p loc with
   | Ok _ as res -> res
   | Ko (err, b) -> Ko (push err loc ("while parsing " ^ name), b)
+
+let one_of (msg : string) (pl : 'a parser list) =
+  match pl with
+  | [] -> invalid_arg "one_of"
+  | x::xs -> msg <?> (List.fold_left (<|>) x xs)
+  
 
 let rec many p =
   let inner (loc : location) = begin

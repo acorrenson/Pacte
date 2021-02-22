@@ -29,12 +29,15 @@ and term (l : location) =
   (chainl fact prod) l
 
 and fact (l : location) =
-  ("fact" <+?> (var <|> (char '(' *> expr <* char ')'))) l
+  (one_of "a factor is expected" [
+    var;
+    char '(' *> expr <* char ')';
+  ]) l
 
 and var (l : location) =
   (char 'x' <|> char 'y' <|> char 'z' => (fun x -> Val x)) l
 
 let _ = 
-  run expr "x+y*z+x*(x+x+y*z)"
+  run expr "x+y*z+x*(x+x+y*)"
   |> print_expr stdout
   |> print_newline

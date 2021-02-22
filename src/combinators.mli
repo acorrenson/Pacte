@@ -21,6 +21,8 @@ val (=>) : 'a parser -> ('a -> 'b) -> 'b parser
 
 val (<~>) : 'a parser -> 'a list parser -> 'a list parser
 
+val one_of : string -> 'a parser list -> 'a parser
+
 val many  : 'a parser -> 'a list parser
 
 val many1 : 'a parser -> 'a list parser
