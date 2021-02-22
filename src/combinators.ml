@@ -77,11 +77,15 @@ let (<+?>) (name : string) (p : 'a parser) (loc : location) =
   | Ok _ as res -> res
   | Ko (err, b) -> Ko (push err loc ("while parsing " ^ name), b)
 
+let (<!>) (error : string) (p : 'a parser) (loc : location) =
+  match p loc with
+  | Ok (_, off) -> Ko (mk_error (update_loc loc off) error, true)
+  | Ko _ as err -> err
+
 let one_of (msg : string) (pl : 'a parser list) =
   match pl with
   | [] -> invalid_arg "one_of"
   | x::xs -> msg <?> (List.fold_left (<|>) x xs)
-  
 
 let rec many p =
   let inner (loc : location) = begin

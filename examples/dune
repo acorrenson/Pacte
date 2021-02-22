@@ -1,3 +1,9 @@
 (executable
  (name arith)
- (libraries pacte))
+ (libraries pacte)
+ (modules arith))
+
+(executable
+ (name sexp)
+ (libraries pacte)
+ (modules sexp))

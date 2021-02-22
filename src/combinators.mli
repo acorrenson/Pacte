@@ -39,4 +39,6 @@ val (<?>) : string -> 'a parser -> 'a parser
 
 val (<+?>) : string -> 'a parser -> 'a parser
 
+val (<!>) : string -> 'a parser -> 'a parser
+
 val run : 'a parser -> string -> 'a
