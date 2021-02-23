@@ -65,6 +65,6 @@ let anti_pattern =
   )
 
 let _ =
-  run sexp "(+ (* a b) (* c d))"
+  run sexp "(+ (* a b) (/ a d))"
   |> show stdout
   |> print_newline

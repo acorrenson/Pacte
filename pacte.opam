@@ -7,7 +7,7 @@ license: "MIT"
 homepage: "https://github.com/jdrprod/Pacte"
 bug-reports: "https://github.com/jdrprod/Pacte/issues"
 depends: [
-  "dune" {>= "2.7"}
+  "dune" {>= "2.8"}
   "odoc" {with-doc}
 ]
 build: [

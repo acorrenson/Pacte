@@ -45,6 +45,15 @@ let (>>=) (p : 'a parser) (f : 'a -> 'b parser) (loc : location) : 'b result =
       |> advance_sucess n
   | Ko _ as err -> err
 
+let (>=>) (p : 'a parser) (f : 'a -> (location * location) -> 'b parser) (loc : location) =
+  match p loc with
+  | Ok (res, n) ->
+      let loc' = update_loc loc n in 
+      (f res (loc, loc')) loc'
+      |> commit_if (n != 0)
+      |> advance_sucess n
+  | Ko _ as err -> err
+
 let (let*) = (>>=)
 
 let (<|>) (p : 'a parser) (q : 'a parser) (loc : location) : 'a result =
@@ -54,6 +63,9 @@ let (<|>) (p : 'a parser) (q : 'a parser) (loc : location) : 'a result =
 
 let (=>) (p : 'a parser) (f : 'a -> 'b) =
     p >>= (fun x -> return (f x))
+
+let (=>>) (p : 'a parser) (f : 'a -> (location * location) -> 'b) =
+    p >=> (fun x l -> return (f x l))
 
 let (<~>) px pxs =
   let* r = px in

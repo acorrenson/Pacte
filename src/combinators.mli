@@ -13,11 +13,15 @@ val char : char -> char parser
 
 val (<|>) : 'a parser -> 'a parser -> 'a parser
 
-val (>>=) : 'a parser -> ('a -> 'b parser) -> location -> 'b result
+val (>>=) : 'a parser -> ('a -> 'b parser) -> 'b parser
 
-val (let*) : 'a parser -> ('a -> 'b parser) -> location -> 'b result
+val (>=>) : 'a parser -> ('a -> (location * location) -> 'b parser) -> 'b parser
+
+val (let*) : 'a parser -> ('a -> 'b parser) -> 'b parser
 
 val (=>) : 'a parser -> ('a -> 'b) -> 'b parser
+
+val (=>>) : 'a parser -> ('a -> (location * location) -> 'b) -> 'b parser
 
 val (<~>) : 'a parser -> 'a list parser -> 'a list parser
 
