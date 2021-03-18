@@ -2,15 +2,18 @@ open Parse_error
 open Location
 open LazyStream
 
+(* Parsing results *)
 type 'a result =
   | Ok of ('a * int)
   | Ko of (parse_error * bool)
 
+(* Type of parsers *)
 type 'a parser = location -> 'a result
 
-let return (x : 'a) _ =
-  Ok (x, 0)
+(* Identity parser *)
+let return (x : 'a) _ = Ok (x, 0)
 
+(* Single char parser *)
 let char (c : char) (loc : location) =
   match loc.data with
   | Nil   -> Ko (mk_error loc "unexpected EOF", false)
@@ -18,30 +21,23 @@ let char (c : char) (loc : location) =
     if x == c then Ok (c, 1)
     else Ko (mk_error loc (Printf.sprintf "expected %c found %c" c x), false)
 
-let rec skip (n : int) (l : 'a t) =
-  if n = 0 then l
-  else skip (n - 1) (tail l)
-
-let update_loc (loc : location) (n : int) = {
-  loc with
-  offset = loc.offset + n;
-  data = skip n loc.data;
-}
-
+(* Conditionnaly update the commitment status of a parsing result *)
 let commit_if (b : bool) (res : 'a result) = 
   match res with
   | Ko (err, contrib) -> Ko (err, contrib || b)
   | _ -> res
 
+(* Update the character consumption counter of a positive result by n *)
 let advance_sucess (n : int) (res : 'a result)=
   match res with
   | Ok (ret, m) -> Ok (ret, m + n)
   | _ -> res
 
+(* Flatmap for parsers *)
 let (>>=) (p : 'a parser) (f : 'a -> 'b parser) (loc : location) : 'b result =
   match p loc with
   | Ok (res, n) ->
-    (f res) (update_loc loc n)
+    (f res) (Location.update loc n)
     |> commit_if (n != 0)
     |> advance_sucess n
   | Ko _ as err -> err
@@ -49,7 +45,7 @@ let (>>=) (p : 'a parser) (f : 'a -> 'b parser) (loc : location) : 'b result =
 let (>=>) (p : 'a parser) (f : 'a -> (location * location) -> 'b parser) (loc : location) =
   match p loc with
   | Ok (res, n) ->
-    let loc' = update_loc loc n in 
+    let loc' = Location.update loc n in 
     (f res (loc, loc')) loc'
     |> commit_if (n != 0)
     |> advance_sucess n
@@ -92,7 +88,7 @@ let (<+?>) (name : string) (p : 'a parser) (loc : location) =
 
 let (<!>) (error : string) (p : 'a parser) (loc : location) =
   match p loc with
-  | Ok (_, off) -> Ko (mk_error (update_loc loc off) error, true)
+  | Ok (_, off) -> Ko (mk_error (Location.update loc off) error, true)
   | Ko _ as err -> err
 
 let one_of (msg : string) (pl : 'a parser list) =

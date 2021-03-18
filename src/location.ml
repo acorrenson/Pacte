@@ -13,6 +13,10 @@ module LazyStream = struct
     | Cons (_, s) -> Lazy.force s
     | Nil -> raise End_of_stream
 
+  let rec skip (n : int) (l : 'a t) =
+    if n = 0 then l
+    else skip (n - 1) (tail l)
+
   let of_stream s =
     let rec next s =
       try Cons (Stream.next s, lazy (next s))
@@ -46,3 +50,9 @@ let from_string s =
   ; data = LazyStream.of_string s
   ; reference = String s
   }
+
+let update (loc : location) (n : int) = {
+  loc with
+  offset = loc.offset + n;
+  data = LazyStream.skip n loc.data;
+}
