@@ -45,4 +45,8 @@ val (<+?>) : string -> 'a parser -> 'a parser
 
 val (<!>) : string -> 'a parser -> 'a parser
 
-val run : 'a parser -> string -> 'a
+val parse : 'a parser -> location -> 'a
+
+val parse_file : 'a parser -> string -> 'a
+
+val parse_string : 'a parser -> string -> 'a

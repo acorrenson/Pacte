@@ -10,7 +10,7 @@ let rec show out = function
   | Nil -> Printf.fprintf out "()"
   | Atom s -> Printf.fprintf out "%s" s
   | Cons (car, cdr) ->
-      Printf.fprintf out "(%a . %a)" show car show cdr
+    Printf.fprintf out "(%a %a)" show car show cdr
 
 let rec of_list = function
   | [] -> Nil
@@ -65,6 +65,6 @@ let anti_pattern =
   )
 
 let _ =
-  run sexp "(+ (* a b) (/ a d))"
+  parse_string sexp "(+ (* a b) (/ a d))"
   |> show stdout
   |> print_newline

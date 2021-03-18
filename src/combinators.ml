@@ -1,5 +1,6 @@
 open Parse_error
 open Location
+open LazyStream
 
 type 'a result =
   | Ok of ('a * int)
@@ -12,14 +13,14 @@ let return (x : 'a) _ =
 
 let char (c : char) (loc : location) =
   match loc.data with
-  | []   -> Ko (mk_error loc "unexpected EOF", false)
-  | x::_ ->
+  | Nil   -> Ko (mk_error loc "unexpected EOF", false)
+  | Cons (x, _) ->
     if x == c then Ok (c, 1)
     else Ko (mk_error loc (Printf.sprintf "expected %c found %c" c x), false)
 
-let rec skip (n : int) (l : 'a list) =
+let rec skip (n : int) (l : 'a t) =
   if n = 0 then l
-  else skip (n - 1) (List.tl l)
+  else skip (n - 1) (tail l)
 
 let update_loc (loc : location) (n : int) = {
   loc with
@@ -40,18 +41,18 @@ let advance_sucess (n : int) (res : 'a result)=
 let (>>=) (p : 'a parser) (f : 'a -> 'b parser) (loc : location) : 'b result =
   match p loc with
   | Ok (res, n) ->
-      (f res) (update_loc loc n)
-      |> commit_if (n != 0)
-      |> advance_sucess n
+    (f res) (update_loc loc n)
+    |> commit_if (n != 0)
+    |> advance_sucess n
   | Ko _ as err -> err
 
 let (>=>) (p : 'a parser) (f : 'a -> (location * location) -> 'b parser) (loc : location) =
   match p loc with
   | Ok (res, n) ->
-      let loc' = update_loc loc n in 
-      (f res (loc, loc')) loc'
-      |> commit_if (n != 0)
-      |> advance_sucess n
+    let loc' = update_loc loc n in 
+    (f res (loc, loc')) loc'
+    |> commit_if (n != 0)
+    |> advance_sucess n
   | Ko _ as err -> err
 
 let (let*) = (>>=)
@@ -62,10 +63,10 @@ let (<|>) (p : 'a parser) (q : 'a parser) (loc : location) : 'a result =
   | _ as res -> res
 
 let (=>) (p : 'a parser) (f : 'a -> 'b) =
-    p >>= (fun x -> return (f x))
+  p >>= (fun x -> return (f x))
 
 let (=>>) (p : 'a parser) (f : 'a -> (location * location) -> 'b) =
-    p >=> (fun x l -> return (f x l))
+  p >=> (fun x l -> return (f x l))
 
 let (<~>) px pxs =
   let* r = px in
@@ -80,9 +81,9 @@ let (<?>) (msg : string) (p : 'a parser) (loc : location) =
   match p loc with
   | Ok _ as res -> res
   | Ko (err, b) ->
-      match err with
-      | [] -> Ko (mk_error loc msg, b)
-      | (l, _)::_ -> Ko (mk_error l msg, b)
+    match err with
+    | [] -> Ko (mk_error loc msg, b)
+    | (l, _)::_ -> Ko (mk_error l msg, b)
 
 let (<+?>) (name : string) (p : 'a parser) (loc : location) =
   match p loc with
@@ -129,19 +130,15 @@ let rec chainr (p : 'a parser) (op : ('a -> 'a -> 'a) parser) =
     return (f t1 t2)
   end <|> return t1
 
-let list_of_string (s : string) =
-  let len = String.length s in
-  let rec step (i : int) (acc : char list) =
-    if i < 0 then acc
-    else step (i - 1) (s.[i]::acc)
-  in
-  step (len - 1) []
-
-let run (p : 'a parser) (s : string) =
-  match p {
-    offset = 0;
-    data = list_of_string s;
-    reference = s;
-  } with
+let parse (p : 'a parser) (l : location)=
+  match p l with
   | Ok (res, _) -> res
   | Ko (err, _) -> Printf.printf "%a" show err; exit 1
+
+let parse_string (p : 'a parser) (s : string) =
+  Location.from_string s
+  |> parse p
+
+let parse_file (p : 'a parser) (f : string) =
+  Location.from_file f
+  |> parse p

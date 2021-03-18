@@ -30,14 +30,14 @@ and term (l : location) =
 
 and fact (l : location) =
   (one_of "a factor is expected" [
-    var;
-    char '(' *> expr <* char ')';
-  ]) l
+      var;
+      char '(' *> expr <* char ')';
+    ]) l
 
 and var (l : location) =
   (char 'x' <|> char 'y' <|> char 'z' => (fun x -> Val x)) l
 
 let _ = 
-  run expr "x+y*z+x*(x+x+y*)"
+  parse_string expr "x+y*z+x*(x+x+y*)"
   |> print_expr stdout
   |> print_newline
